@@ -197,9 +197,10 @@ export default function VideoCall({ roomId }) {
   const localVideoRef = useRef(null);
   const socketRef = useRef(null);
   const pcs = useRef(new Map()); // Map peerId -> RTCPeerConnection
+  const localStreamRef = useRef(null);
 
   const [localStream, setLocalStream] = useState(null);
-  const [remoteStreams, setRemoteStreams] = useState({}); // peerId -> MediaStream
+  const [remoteStreams, setRemoteStreams] = useState({}); // { peerId: MediaStream }
   const [screenSharing, setScreenSharing] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
@@ -214,9 +215,12 @@ export default function VideoCall({ roomId }) {
           audio: true,
         });
         setLocalStream(stream);
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        localStreamRef.current = stream;
 
-        // Join room with socket ID as username
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
         socketRef.current.emit("join_room", {
           roomId,
           username: socketRef.current.id,
@@ -225,35 +229,36 @@ export default function VideoCall({ roomId }) {
         console.error("Error accessing media devices.", err);
       }
     };
+
     getMedia();
 
-    // When a new user joins - create offer to them
+    // New user joined - create offer for them
     socketRef.current.on("user-joined", (peerId) => {
       if (peerId === socketRef.current.id) return;
       createOffer(peerId);
     });
 
-    // Handle offer received
+    // Received offer from a peer
     socketRef.current.on("offer", async ({ sdp, sender }) => {
       if (sender === socketRef.current.id) return;
       await handleOffer(sdp, sender);
     });
 
-    // Handle answer received
+    // Received answer from a peer
     socketRef.current.on("answer", async ({ sdp, sender }) => {
       if (sender === socketRef.current.id) return;
       const pc = pcs.current.get(sender);
       if (pc) await pc.setRemoteDescription(new RTCSessionDescription(sdp));
     });
 
-    // Handle ICE candidate received
+    // Received ICE candidate from a peer
     socketRef.current.on("ice_candidate", ({ candidate, sender }) => {
       if (sender === socketRef.current.id) return;
       const pc = pcs.current.get(sender);
       if (pc && candidate) pc.addIceCandidate(new RTCIceCandidate(candidate));
     });
 
-    // When a user leaves
+    // A peer left the room
     socketRef.current.on("user-left", (peerId) => {
       const pc = pcs.current.get(peerId);
       if (pc) {
@@ -273,21 +278,23 @@ export default function VideoCall({ roomId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
-  // Create peer connection and send offer
   async function createOffer(peerId) {
+    if (!localStreamRef.current) return;
+
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     pcs.current.set(peerId, pc);
 
-    if (localStream) {
-      localStream
-        .getTracks()
-        .forEach((track) => pc.addTrack(track, localStream));
-    }
+    // Add local tracks
+    localStreamRef.current.getTracks().forEach((track) => {
+      pc.addTrack(track, localStreamRef.current);
+    });
 
+    // Listen for remote streams
     pc.ontrack = (event) => {
       setRemoteStreams((prev) => ({ ...prev, [peerId]: event.streams[0] }));
     };
 
+    // Send ICE candidates to peer
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         socketRef.current.emit("ice_candidate", {
@@ -299,6 +306,7 @@ export default function VideoCall({ roomId }) {
       }
     };
 
+    // Create and send offer
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
@@ -310,16 +318,15 @@ export default function VideoCall({ roomId }) {
     });
   }
 
-  // Handle offer from peer and send answer
   async function handleOffer(sdp, sender) {
+    if (!localStreamRef.current) return;
+
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     pcs.current.set(sender, pc);
 
-    if (localStream) {
-      localStream
-        .getTracks()
-        .forEach((track) => pc.addTrack(track, localStream));
-    }
+    localStreamRef.current.getTracks().forEach((track) => {
+      pc.addTrack(track, localStreamRef.current);
+    });
 
     pc.ontrack = (event) => {
       setRemoteStreams((prev) => ({ ...prev, [sender]: event.streams[0] }));
@@ -348,7 +355,6 @@ export default function VideoCall({ roomId }) {
     });
   }
 
-  // Screen sharing toggle
   async function toggleScreenShare() {
     if (!screenSharing) {
       try {
@@ -357,7 +363,6 @@ export default function VideoCall({ roomId }) {
         });
         const screenTrack = screenStream.getVideoTracks()[0];
 
-        // Replace video track for all peers
         pcs.current.forEach((pc) => {
           const sender = pc.getSenders().find((s) => s.track.kind === "video");
           if (sender) sender.replaceTrack(screenTrack);
@@ -368,12 +373,12 @@ export default function VideoCall({ roomId }) {
             const sender = pc
               .getSenders()
               .find((s) => s.track.kind === "video");
-            if (sender && localStream)
-              sender.replaceTrack(localStream.getVideoTracks()[0]);
+            if (sender && localStreamRef.current)
+              sender.replaceTrack(localStreamRef.current.getVideoTracks()[0]);
           });
           setScreenSharing(false);
-          if (localVideoRef.current && localStream)
-            localVideoRef.current.srcObject = localStream;
+          if (localVideoRef.current && localStreamRef.current)
+            localVideoRef.current.srcObject = localStreamRef.current;
         };
 
         if (localVideoRef.current)
@@ -385,41 +390,39 @@ export default function VideoCall({ roomId }) {
     } else {
       pcs.current.forEach((pc) => {
         const sender = pc.getSenders().find((s) => s.track.kind === "video");
-        if (sender && localStream)
-          sender.replaceTrack(localStream.getVideoTracks()[0]);
+        if (sender && localStreamRef.current)
+          sender.replaceTrack(localStreamRef.current.getVideoTracks()[0]);
       });
-      if (localVideoRef.current && localStream)
-        localVideoRef.current.srcObject = localStream;
+      if (localVideoRef.current && localStreamRef.current)
+        localVideoRef.current.srcObject = localStreamRef.current;
       setScreenSharing(false);
     }
   }
 
-  // Toggle mic on/off
   function toggleMic() {
-    if (!localStream) return;
-    localStream.getAudioTracks().forEach((track) => {
+    if (!localStreamRef.current) return;
+    localStreamRef.current.getAudioTracks().forEach((track) => {
       track.enabled = !track.enabled;
     });
     setMicOn((prev) => !prev);
   }
 
-  // Toggle video on/off
   function toggleVideo() {
-    if (!localStream) return;
-    localStream.getVideoTracks().forEach((track) => {
+    if (!localStreamRef.current) return;
+    localStreamRef.current.getVideoTracks().forEach((track) => {
       track.enabled = !track.enabled;
     });
     setVideoOn((prev) => !prev);
   }
 
-  // End call and cleanup
   function endCall() {
     pcs.current.forEach((pc) => pc.close());
     pcs.current.clear();
 
-    if (localStream) {
-      localStream.getTracks().forEach((track) => track.stop());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
       setLocalStream(null);
+      localStreamRef.current = null;
     }
 
     if (socketRef.current) {
@@ -439,7 +442,6 @@ export default function VideoCall({ roomId }) {
     <div>
       <h2>Video Call Room: {roomId}</h2>
 
-      {/* Video Grid */}
       <div
         style={{
           display: "grid",
@@ -447,7 +449,7 @@ export default function VideoCall({ roomId }) {
           gap: 10,
         }}
       >
-        {/* Local video */}
+        {/* Local Video */}
         <video
           ref={localVideoRef}
           autoPlay
@@ -455,7 +457,8 @@ export default function VideoCall({ roomId }) {
           playsInline
           style={{ width: "100%", backgroundColor: "black" }}
         />
-        {/* Remote videos */}
+
+        {/* Remote Videos */}
         {Object.entries(remoteStreams).map(([peerId, stream]) => (
           <video
             key={peerId}
@@ -469,7 +472,6 @@ export default function VideoCall({ roomId }) {
         ))}
       </div>
 
-      {/* Controls */}
       <div
         style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}
       >

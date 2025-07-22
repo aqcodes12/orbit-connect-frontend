@@ -10,7 +10,8 @@ const NAV_ITEMS = [
   { label: "Groups", to: "/groups" },
   { label: "Create Group", to: "/groups/new" },
   { label: "Channels", to: "/channels" },
-  { label: "Video", to: "/video/test-room" },
+  //   { label: "Video", to: "/video/test-room" },
+  { label: "Meetings", to: "/meet" },
 ];
 
 const USER_MENU_ITEMS = [

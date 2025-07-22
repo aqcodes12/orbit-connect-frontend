@@ -8,8 +8,10 @@ import GroupCreation from "./pages/GroupCreation";
 import ChatRoom from "./pages/ChatRoom";
 import ChannelList from "./pages/ChannelList";
 import ChannelCreation from "./pages/ChannelCreation";
-import VideoCall from "./pages/VideoCall";
+import VideoCall from "./pages/video/VideoCall";
 import NavV2 from "./components/NavV2";
+import MeetingLandingPage from "./pages/MeetingLandingPage";
+import VideoCallWrapper from "./pages/VideoCallWrapper";
 
 function UsersPage({ currentUser }) {
   const navigate = useNavigate();
@@ -85,7 +87,8 @@ export default function App() {
             path="/channels/new"
             element={<ChannelCreation currentUser={user} />}
           />
-          <Route path="/video/:roomId" element={<VideoCall />} />
+          <Route path="/meet" element={<MeetingLandingPage />} />
+          <Route path="/meeting/:roomId" element={<VideoCallWrapper />} />
         </Routes>
       </main>
     </div>

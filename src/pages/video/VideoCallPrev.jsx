@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
-import { BASE_URL } from "../constants";
+import { BASE_URL } from "../../constants";
 
 const SOCKET_SERVER_URL = `${BASE_URL}`;
 
-export default function VideoCall({ roomId }) {
+export default function VideoCallPrev({ roomId }) {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const pcRef = useRef(null);

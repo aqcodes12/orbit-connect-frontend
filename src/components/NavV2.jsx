@@ -2,6 +2,7 @@
 import React, { use, useState } from "react";
 import { Link } from "react-router-dom";
 import OrbLogo from "../assets/orb.png";
+import userIcon from "../assets/user.png";
 
 // Config
 const NAV_ITEMS = [
@@ -38,7 +39,7 @@ const UserDropdown = ({ username, isOpen, onLogout }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="z-50 absolute top-12 right-0 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow-sm">
+    <div className="z-50 absolute top-12 right-0 text-base list-none bg-slate-200 divide-y divide-gray-100 rounded-lg shadow-sm">
       <div className="px-4 py-3">
         <span className="block text-sm text-gray-900">{username}</span>
         <span className="block text-sm text-gray-500 truncate">
@@ -95,11 +96,7 @@ const NavV2 = ({ username, onLogout }) => {
             aria-expanded={isUserDropdownOpen}
           >
             <span className="sr-only">Open user menu</span>
-            <img
-              className="w-8 h-8 rounded-full"
-              src="/docs/images/people/profile-picture-3.jpg"
-              alt="User"
-            />
+            <img className="w-8 h-8 rounded-full" src={userIcon} alt="User" />
           </button>
 
           <UserDropdown

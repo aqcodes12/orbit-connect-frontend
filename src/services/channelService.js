@@ -1,6 +1,7 @@
 import axios from "axios";
+import { BASE_URL } from "../constants";
 
-const API_URL = "http://localhost:5001/api/channels";
+const API_URL = `${BASE_URL}/api/channels`;
 
 export const getPublicChannels = () => {
   return axios.get(API_URL);

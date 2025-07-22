@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { createGroup } from "../services/groupService";
 import axios from "axios";
+import { BASE_URL } from "../constants";
 
-const API_USERS = "http://localhost:5001/api/users";
+const API_USERS = `${BASE_URL}/api/users`;
 
 export default function GroupCreation({ currentUser, onGroupCreated }) {
   const [groupName, setGroupName] = useState("");

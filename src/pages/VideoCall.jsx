@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { BASE_URL } from "../constants";
 
-const SOCKET_SERVER_URL = "http://localhost:5001";
+const SOCKET_SERVER_URL = `${BASE_URL}`;
 
 export default function VideoCall({ roomId }) {
   const localVideoRef = useRef(null);

@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import axios from "axios";
+import { BASE_URL } from "../constants";
 
-const SOCKET_SERVER_URL = "http://localhost:5001";
-const API_URL = "http://localhost:5001/api/messages";
+const SOCKET_SERVER_URL = `${BASE_URL}`;
+const API_URL = `${BASE_URL}/api/messages`;
 
 export default function ChatRoom({ username, isGroupChat = false }) {
   const { chatWith, groupId } = useParams();
@@ -122,12 +123,12 @@ export default function ChatRoom({ username, isGroupChat = false }) {
 
       // Try fetching from groups API first
       axios
-        .get(`http://localhost:5001/api/groups/detail/${groupId}`)
+        .get(`${BASE_URL}/api/groups/detail/${groupId}`)
         .then((res) => setGroupName(res.data.name))
         .catch(() => {
           // If groups fetch fails, try channels
           axios
-            .get(`http://localhost:5001/api/channels/${groupId}`)
+            .get(`${BASE_URL}/api/channels/${groupId}`)
             .then((res) => setGroupName(res.data.name))
             .catch(() => setGroupName("Group Chat"));
         });

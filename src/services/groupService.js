@@ -1,6 +1,7 @@
 import axios from "axios";
+import { BASE_URL } from "../constants";
 
-const API_URL = "http://localhost:5001/api/groups";
+const API_URL = `${BASE_URL}/api/groups`;
 
 export const createGroup = (name, members, admin) => {
   return axios.post(API_URL, { name, members, admin });

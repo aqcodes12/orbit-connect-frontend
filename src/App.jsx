@@ -6,10 +6,10 @@ import UserList from "./pages/UserList";
 import GroupList from "./pages/GroupList";
 import GroupCreation from "./pages/GroupCreation";
 import ChatRoom from "./pages/ChatRoom";
-import Navbar from "./components/Navbar";
 import ChannelList from "./pages/ChannelList";
 import ChannelCreation from "./pages/ChannelCreation";
 import VideoCall from "./pages/VideoCall";
+import NavV2 from "./components/NavV2";
 
 function UsersPage({ currentUser }) {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function App() {
 
   return (
     <div className="max-w-6xl mx-auto p-0 relative min-h-screen flex flex-col">
-      <Navbar username={user} onLogout={handleLogout} />
+      <NavV2 username={user} onLogout={handleLogout} />
       <main className="flex-grow p-4">
         <Routes>
           <Route path="/" element={<UsersPage currentUser={user} />} />

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { BASE_URL } from "../constants";
 
-const API_URL = "http://localhost:5001/api/users";
+const API_URL = `${BASE_URL}/api/users`;
 
 export default function UserList({ currentUser, onSelectUser }) {
   const [users, setUsers] = useState([]);

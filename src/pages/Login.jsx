@@ -11,7 +11,7 @@ export default function Login({ onLogin }) {
     setError("");
     try {
       const res = await login(username, password);
-      localStorage.setItem("username", res.data.username);
+      sessionStorage.setItem("username", res.data.username);
       onLogin(res.data.username);
     } catch (err) {
       setError(err.response?.data?.msg || "Login failed");

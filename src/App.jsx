@@ -36,12 +36,12 @@ export default function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("username");
+    const savedUser = sessionStorage.getItem("username");
     if (savedUser) setUser(savedUser);
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("username");
+    sessionStorage.removeItem("username");
     setUser(null);
     navigate("/login");
   };
